@@ -1,0 +1,3 @@
+system on start {
+    print "Hello world"
+}
