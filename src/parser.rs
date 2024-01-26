@@ -36,6 +36,10 @@ pub fn parse(source: &str) -> Option<Vec<Token>> {
     Some(tokens)
 }
 
+pub trait Parse: Sized {
+    fn parse(source: &str) -> Option<Self>;
+}
+
 fn skip(remaining: &mut &str, look_ahead: &mut usize) {
     *remaining = &remaining[*look_ahead..];
     *look_ahead = 1;
@@ -69,7 +73,7 @@ pub enum Token {
     Literal(Literal),
 }
 
-impl Token {
+impl Parse for Token {
     fn parse(source: &str) -> Option<Self> {
         None.or_else(|| Keyword::parse(source).map(Self::Keyword))
             .or_else(|| (source == "{").then_some(Self::OpenBrace))
@@ -77,7 +81,9 @@ impl Token {
             .or_else(|| Literal::parse(source).map(Self::Literal))
             .or_else(|| Self::parse_identifier(source).map(Self::Identifier))
     }
+}
 
+impl Token {
     fn parse_identifier(source: &str) -> Option<String> {
         let before = before(source, " ")?;
         if before.chars().any(|c| !c.is_alphanumeric()) {
@@ -94,7 +100,7 @@ pub enum Keyword {
     On,
 }
 
-impl Keyword {
+impl Parse for Keyword {
     fn parse(source: &str) -> Option<Self> {
         let before = before(source, " ")?;
         Some(match before {
@@ -110,7 +116,7 @@ pub enum Literal {
     String(String),
 }
 
-impl Literal {
+impl Parse for Literal {
     fn parse(source: &str) -> Option<Self> {
         Some(Self::String(between(source, "\"")?.to_owned()))
     }
